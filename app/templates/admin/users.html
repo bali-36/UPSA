@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+
+{% block title %}User Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+    <div class="row g-0">
+        <div class="col-auto admin-sidebar" style="width: 240px; min-height: calc(100vh - 56px);">
+            <div class="d-flex flex-column py-3">
+                <a href="{{ url_for('admin.dashboard') }}" class="nav-link"><i class="fa-solid fa-gauge-high me-2"></i>Dashboard</a>
+                <a href="{{ url_for('admin.users') }}" class="nav-link active"><i class="fa-solid fa-users me-2"></i>User Management</a>
+                <a href="{{ url_for('admin.audit_logs') }}" class="nav-link"><i class="fa-solid fa-clipboard-list me-2"></i>Audit Logs</a>
+                <a href="{{ url_for('admin.risk_rules') }}" class="nav-link"><i class="fa-solid fa-shield-halved me-2"></i>Risk Rules</a>
+                <a href="{{ url_for('dashboard.index') }}" class="nav-link"><i class="fa-solid fa-arrow-left me-2"></i>Back to App</a>
+            </div>
+        </div>
+        <div class="col p-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h4 style="font-family: 'Poppins', sans-serif; font-weight: 600;">User Management</h4>
+                <form method="GET" class="d-flex gap-2">
+                    <input type="text" class="form-control form-control-sm" name="search" placeholder="Search users..." value="{{ search }}">
+                    <button type="submit" class="btn btn-primary btn-sm" style="background-color: #2563EB;"><i class="fa-solid fa-search"></i></button>
+                </form>
+            </div>
+
+            <div class="card border-0 shadow-sm">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="small">ID</th>
+                                <th class="small">Name</th>
+                                <th class="small">Email</th>
+                                <th class="small">Role</th>
+                                <th class="small">Privacy Score</th>
+                                <th class="small">Risk</th>
+                                <th class="small">Status</th>
+                                <th class="small">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for u in users %}
+                            {% set score = scores.get(u.id) %}
+                            <tr>
+                                <td class="small text-muted">{{ u.id }}</td>
+                                <td class="small fw-medium">{{ u.full_name }}</td>
+                                <td class="small">{{ u.email }}</td>
+                                <td><span class="badge {{ 'bg-primary' if u.is_admin else 'bg-secondary' }}" style="font-size: 0.7rem;">{{ u.role.title() }}</span></td>
+                                <td class="small">
+                                    {% if score %}
+                                    <span style="color: {{ score.score_color_hex }}; font-family: 'JetBrains Mono', monospace;">{{ score.overall_score }}</span>
+                                    {% else %}<span class="text-muted">—</span>{% endif %}
+                                </td>
+                                <td>
+                                    {% if score %}
+                                    <span class="badge bg-{{ score.category_color }}" style="font-size: 0.7rem;">{{ score.risk_category.title() }}</span>
+                                    {% else %}<span class="text-muted">—</span>{% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge {{ 'bg-success' if u.is_active else 'bg-secondary' }}" style="font-size: 0.7rem;">{{ 'Active' if u.is_active else 'Inactive' }}</span>
+                                </td>
+                                <td>
+                                    <form method="POST" action="{{ url_for('admin.toggle_role', user_id=u.id) }}" class="d-inline">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="btn btn-sm btn-outline-primary" style="font-size: 0.7rem;" title="Toggle Role"><i class="fa-solid fa-user-shield"></i></button>
+                                    </form>
+                                    <form method="POST" action="{{ url_for('admin.toggle_active', user_id=u.id) }}" class="d-inline">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="btn btn-sm btn-outline-{{ 'danger' if u.is_active else 'success' }}" style="font-size: 0.7rem;" title="{{ 'Deactivate' if u.is_active else 'Activate' }}"><i class="fa-solid {{ 'fa-pause' if u.is_active else 'fa-play' }}"></i></button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% if pagination.pages > 1 %}
+                <div class="card-footer">
+                    <nav>
+                        <ul class="pagination pagination-sm justify-content-center mb-0">
+                            {% for p in pagination.iter_pages(left_edge=2, left_current=2, right_current=3, right_edge=2) %}
+                                {% if p %}
+                                <li class="page-item {{ 'active' if p == pagination.page else '' }}">
+                                    <a class="page-link" href="?page={{ p }}{% if search %}&search={{ search }}{% endif %}">{{ p }}</a>
+                                </li>
+                                {% else %}
+                                <li class="page-item disabled"><span class="page-link">...</span></li>
+                                {% endif %}
+                            {% endfor %}
+                        </ul>
+                    </nav>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

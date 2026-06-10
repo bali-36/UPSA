@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+
+{% block title %}Policy Report{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4 style="font-family: 'Poppins', sans-serif; font-weight: 600;">Policy Analysis Result</h4>
+            <p class="text-muted small mb-0">{{ report.original_filename }} — {{ report.created_at.strftime('%B %d, %Y at %H:%M') if report.created_at }}</p>
+        </div>
+        <a href="{{ url_for('policy.index') }}" class="btn btn-outline-secondary btn-sm">
+            <i class="fa-solid fa-arrow-left me-1"></i>Back to Analyzer
+        </a>
+    </div>
+
+    <!-- Overall Risk Banner -->
+    <div class="card mb-4" style="border-left: 4px solid {{ report.risk_color_hex }};">
+        <div class="card-body d-flex align-items-center gap-4">
+            <div class="text-center">
+                <div class="fs-1 fw-bold" style="font-family: 'JetBrains Mono', monospace; color: {{ report.risk_color_hex }};">
+                    {{ report.overall_policy_score }}
+                </div>
+                <small class="text-muted">out of 100</small>
+            </div>
+            <div>
+                <span class="badge bg-{{ report.risk_color }} mb-2" style="font-size: 0.875rem;">{{ report.risk_label }}</span>
+                <h5 class="mb-1" style="font-family: 'Poppins', sans-serif;">{{ report.original_filename }}</h5>
+                <p class="text-muted small mb-0">Higher scores indicate more privacy concerns</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Score Breakdown -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3">
+                    <h6 class="mb-0 fw-semibold">Risk Breakdown</h6>
+                </div>
+                <div class="card-body p-3">
+                    {% set breakdown = report.to_dict()['breakdown'] %}
+                    {% set findings = report.to_dict()['key_findings'] %}
+                    {% for key, data in breakdown.items() %}
+                    {% set pct = data['score'] %}
+                    {% set bar_color = '#059669' if pct < 40 else '#D97706' if pct < 70 else '#DC2626' %}
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <small class="fw-semibold text-dark">{{ key.replace('_', ' ').title() }}</small>
+                            <small class="text-muted">{{ data['label'] }} ({{ pct }})</small>
+                        </div>
+                        <div class="progress mb-2" style="height: 8px;">
+                            <div class="progress-bar" style="width: {{ pct }}%; background-color: {{ bar_color }};"></div>
+                        </div>
+                        
+                        <!-- Categorized Findings Points -->
+                        <ul class="list-unstyled ps-1 mb-0 mt-2">
+                            {% set category_findings = [] %}
+                            {% for f in findings %}
+                                {% if f.category == key %}
+                                    {% set _ = category_findings.append(f) %}
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if category_findings %}
+                                {% for finding in category_findings %}
+                                <li class="d-flex align-items-start gap-2 mb-1.5 small">
+                                    {% if finding.type == 'positive' %}
+                                    <i class="fa-solid fa-circle-check text-success mt-1" style="font-size: 0.75rem;"></i>
+                                    {% elif finding.type == 'negative' %}
+                                    <i class="fa-solid fa-circle-xmark text-danger mt-1" style="font-size: 0.75rem;"></i>
+                                    {% else %}
+                                    <i class="fa-solid fa-triangle-exclamation text-warning mt-1" style="font-size: 0.75rem;"></i>
+                                    {% endif %}
+                                    <span class="text-secondary">{{ finding.text }}</span>
+                                </li>
+                                {% endfor %}
+                            {% else %}
+                                <li class="d-flex align-items-start gap-2 mb-1.5 small text-muted">
+                                    <i class="fa-solid fa-circle-info mt-1" style="font-size: 0.75rem;"></i>
+                                    <span>No specific details found in policy text.</span>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Summary & Key Findings -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3">
+                    <h6 class="mb-0 fw-semibold">What We Found (Plain Summary)</h6>
+                </div>
+                <div class="card-body">
+                    <div style="line-height: 1.6;">{{ report.summary_text|safe }}</div>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h6 class="mb-0 fw-semibold">Key Findings</h6>
+                </div>
+                <div class="card-body p-3">
+                    {% set findings = report.to_dict()['key_findings'] %}
+                    {% for finding in findings %}
+                    <div class="d-flex align-items-start gap-2 mb-2">
+                        {% if finding.type == 'positive' %}
+                        <i class="fa-solid fa-circle-check text-success mt-1"></i>
+                        {% elif finding.type == 'negative' %}
+                        <i class="fa-solid fa-circle-xmark text-danger mt-1"></i>
+                        {% else %}
+                        <i class="fa-solid fa-triangle-exclamation text-warning mt-1"></i>
+                        {% endif %}
+                        <span class="small">{{ finding.text }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

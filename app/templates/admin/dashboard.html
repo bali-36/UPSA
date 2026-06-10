@@ -1,0 +1,169 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+    <div class="row g-0">
+        <!-- Sidebar -->
+        <div class="col-auto admin-sidebar" style="width: 240px; min-height: calc(100vh - 56px);">
+            <div class="d-flex flex-column py-3">
+                <a href="{{ url_for('admin.dashboard') }}" class="nav-link active"><i class="fa-solid fa-gauge-high me-2"></i>Dashboard</a>
+                <a href="{{ url_for('admin.users') }}" class="nav-link"><i class="fa-solid fa-users me-2"></i>User Management</a>
+                <a href="{{ url_for('admin.audit_logs') }}" class="nav-link"><i class="fa-solid fa-clipboard-list me-2"></i>Audit Logs</a>
+                <a href="{{ url_for('admin.risk_rules') }}" class="nav-link"><i class="fa-solid fa-shield-halved me-2"></i>Risk Rules</a>
+                <a href="{{ url_for('dashboard.index') }}" class="nav-link"><i class="fa-solid fa-arrow-left me-2"></i>Back to App</a>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col p-4">
+            <h4 class="mb-4" style="font-family: 'Poppins', sans-serif; font-weight: 600;">Admin Dashboard</h4>
+
+            <!-- Stats Cards -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-3">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body d-flex align-items-center gap-3">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; background-color: #E8F4FD;">
+                                <i class="fa-solid fa-users text-primary"></i>
+                            </div>
+                            <div>
+                                <div class="small text-muted">Total Users</div>
+                                <div class="fs-4 fw-bold" style="font-family: 'JetBrains Mono', monospace;">{{ total_users }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body d-flex align-items-center gap-3">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; background-color: #F0FDF4;">
+                                <i class="fa-solid fa-signal text-success"></i>
+                            </div>
+                            <div>
+                                <div class="small text-muted">Active Sessions</div>
+                                <div class="fs-4 fw-bold" style="font-family: 'JetBrains Mono', monospace;">{{ active_sessions }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body d-flex align-items-center gap-3">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; background-color: #F0FDFA;">
+                                <i class="fa-solid fa-chart-pie text-info"></i>
+                            </div>
+                            <div>
+                                <div class="small text-muted">Avg Privacy Score</div>
+                                <div class="fs-4 fw-bold" style="font-family: 'JetBrains Mono', monospace;">{{ avg_privacy }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body d-flex align-items-center gap-3">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; background-color: #FEF2F2;">
+                                <i class="fa-solid fa-ban text-danger"></i>
+                            </div>
+                            <div>
+                                <div class="small text-muted">Blocked Today</div>
+                                <div class="fs-4 fw-bold" style="font-family: 'JetBrains Mono', monospace;">{{ blocked_today }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts -->
+            <div class="row g-4">
+                <div class="col-lg-6">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-white py-3"><h6 class="mb-0 fw-semibold">Privacy Score Distribution</h6></div>
+                        <div class="card-body"><canvas id="scoreDistChart" height="200"></canvas></div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-white py-3"><h6 class="mb-0 fw-semibold">Risk Level Distribution</h6></div>
+                        <div class="card-body"><canvas id="riskDistChart" height="200"></canvas></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+const textColor = isDark ? '#94A3B8' : '#6B7B8F';
+const gridColor = isDark ? '#334155' : '#E2E8F0';
+
+// Score distribution bar chart
+const scoreDistChart = new Chart(document.getElementById('scoreDistChart').getContext('2d'), {
+    type: 'bar',
+    data: {
+        labels: ['0-20', '21-40', '41-60', '61-80', '81-100'],
+        datasets: [{
+            label: 'Users',
+            data: [{{ score_dist['0-20'] }}, {{ score_dist['21-40'] }}, {{ score_dist['41-60'] }}, {{ score_dist['61-80'] }}, {{ score_dist['81-100'] }}],
+            backgroundColor: ['#DC2626', '#D97706', '#2563EB', '#0D9488', '#059669']
+        }]
+    },
+    options: { 
+        responsive: true, 
+        plugins: { legend: { display: false } }, 
+        scales: { 
+            y: { grid: { color: gridColor }, ticks: { color: textColor } }, 
+            x: { grid: { display: false }, ticks: { color: textColor } } 
+        } 
+    }
+});
+
+// Risk distribution donut
+const riskDistChart = new Chart(document.getElementById('riskDistChart').getContext('2d'), {
+    type: 'doughnut',
+    data: {
+        labels: ['Low', 'Medium', 'High'],
+        datasets: [{
+            data: [{{ risk_dist.get('low', 0) }}, {{ risk_dist.get('medium', 0) }}, {{ risk_dist.get('high', 0) }}],
+            backgroundColor: ['#059669', '#D97706', '#DC2626']
+        }]
+    },
+    options: { 
+        responsive: true, 
+        plugins: { 
+            legend: { 
+                position: 'bottom',
+                labels: { color: textColor }
+            } 
+        } 
+    }
+});
+
+window.addEventListener('themeChanged', function(e) {
+    const isDark = e.detail.theme === 'dark';
+    const textColor = isDark ? '#94A3B8' : '#6B7B8F';
+    const gridColor = isDark ? '#334155' : '#E2E8F0';
+
+    if (scoreDistChart) {
+        if (scoreDistChart.options.scales.y) {
+            scoreDistChart.options.scales.y.grid.color = gridColor;
+            if (scoreDistChart.options.scales.y.ticks) scoreDistChart.options.scales.y.ticks.color = textColor;
+        }
+        if (scoreDistChart.options.scales.x) {
+            if (scoreDistChart.options.scales.x.ticks) scoreDistChart.options.scales.x.ticks.color = textColor;
+        }
+        scoreDistChart.update();
+    }
+
+    if (riskDistChart) {
+        if (riskDistChart.options.plugins && riskDistChart.options.plugins.legend && riskDistChart.options.plugins.legend.labels) {
+            riskDistChart.options.plugins.legend.labels.color = textColor;
+        }
+        riskDistChart.update();
+    }
+});
+</script>
+{% endblock %}

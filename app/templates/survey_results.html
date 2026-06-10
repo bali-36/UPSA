@@ -1,0 +1,257 @@
+{% extends 'base.html' %}
+
+{% block title %}Survey Results{% endblock %}
+
+{% block content %}
+{% set questions_map = [
+    {
+        'key': 'q1_reuse_password',
+        'title': 'Password Reuse',
+        'q_text': 'How often do you reuse the same password across different websites?',
+        'options': {
+            1: 'Always — I use the same password everywhere',
+            2: 'Often — I reuse passwords for most sites',
+            3: 'Sometimes — I reuse for a few less important sites'
+        },
+        'why': 'Reusing passwords is like having one key that opens your house, car, and office. If one minor website gets hacked, attackers can use that same email and password to log into your other important accounts (like banking, email, or social media).',
+        'improve': 'Create a unique, strong password for every website you use. Use a password manager to generate and remember them for you.',
+        'icon': 'fa-key'
+    },
+    {
+        'key': 'q2_mfa_usage',
+        'title': 'Multi-Factor Authentication (MFA)',
+        'q_text': 'Do you use multi-factor authentication when available?',
+        'options': {
+            1: 'Never — I find it too inconvenient',
+            2: 'Rarely — Only if forced by the service',
+            3: 'On important accounts — Banking, email, etc.'
+        },
+        'why': 'Passwords alone can be guessed, phished, or leaked in data breaches. MFA acts as a second locked door, requiring a temporary code from your phone or email. Without it, you lack this crucial second layer of security.',
+        'improve': 'Turn on multi-factor authentication (sometimes called 2-step verification) on all services that offer it, especially banking, email, and social media.',
+        'icon': 'fa-shield-halved'
+    },
+    {
+        'key': 'q3_email_verify',
+        'title': 'Email Link Verification',
+        'q_text': 'How do you verify that an email is legitimate before clicking links?',
+        'options': {
+            1: 'I click links to see where they go',
+            2: 'I check the sender display name',
+            3: 'I check the actual email address and look for signs of fraud'
+        },
+        'why': 'Phishing emails are designed to look identical to real ones. Clicking links directly exposes you to malicious downloads or fake login forms. Scammers can also easily fake a display name (making the sender name say "Bank", while the actual address is a generic gmail account).',
+        'improve': 'Avoid clicking links inside emails. Instead, go directly to the official website by typing the address in your browser bar. Always verify the full, actual email address of the sender.',
+        'icon': 'fa-envelope-open-text'
+    },
+    {
+        'key': 'q4_location_perm',
+        'title': 'Website Location Permissions',
+        'q_text': 'What do you do when a website asks for permission to access your location?',
+        'options': {
+            1: 'Always allow — I don\'t mind sharing my location',
+            2: 'Usually allow — If I trust the website',
+            3: 'Sometimes deny — I think about whether it\'s needed'
+        },
+        'why': 'Many websites track your location to compile tracking profiles and target ads. Unnecessary location sharing compromises your physical and digital privacy.',
+        'improve': 'Deny location access requests unless the website absolutely needs it (like navigation or local store locators).',
+        'icon': 'fa-location-dot'
+    },
+    {
+        'key': 'q5_privacy_review',
+        'title': 'Social Media Privacy Reviews',
+        'q_text': 'How often do you review the privacy settings on your social media accounts?',
+        'options': {
+            1: 'Never — I never change privacy settings',
+            2: 'Once a year — If I remember',
+            3: 'Every few months — When something prompts me'
+        },
+        'why': 'Publicly visible details (like birthdates, school names, or hometowns) can be collected by scammers to guess passwords, answer security questions, or target you with specialized scams.',
+        'improve': 'Regularly review your social media privacy settings and change posts and profile visibility to "Friends Only" rather than "Public".',
+        'icon': 'fa-user-lock'
+    },
+    {
+        'key': 'q6_public_wifi',
+        'title': 'Public Wi-Fi Safety',
+        'q_text': 'How do you handle public Wi-Fi networks?',
+        'options': {
+            1: 'I connect freely — No special precautions',
+            2: 'I connect but avoid banking or sensitive sites',
+            3: 'I use a VPN whenever possible on public Wi-Fi'
+        },
+        'why': 'Unsecured public Wi-Fi networks (like in cafes or airports) can be monitored by attackers, allowing them to intercept data or redirect you to fake web pages.',
+        'improve': 'Avoid public Wi-Fi for sensitive work. Use your mobile data hotspot instead, or ensure a reliable VPN is fully connected before accessing the internet.',
+        'icon': 'fa-wifi'
+    },
+    {
+        'key': 'q7_software_updates',
+        'title': 'Device Software Updates',
+        'q_text': 'How do you handle software and app updates?',
+        'options': {
+            1: 'I ignore them — I update when forced',
+            2: 'I delay them — I update when convenient',
+            3: 'I install within a few days of notification'
+        },
+        'why': 'Software updates are primarily released to patch newly discovered security holes. Delaying updates gives hackers a known window to exploit these vulnerabilities to compromise your device.',
+        'improve': 'Enable automatic updates on your devices, operating systems, and key applications so you are protected immediately.',
+        'icon': 'fa-rotate'
+    },
+    {
+        'key': 'q8_backup_habits',
+        'title': 'Data Backups',
+        'q_text': 'How do you back up your important data?',
+        'options': {
+            1: 'I don\'t back up — I haven\'t thought about it',
+            2: 'Occasionally — I copy files to a USB drive sometimes',
+            3: 'Regularly — I use cloud storage for important files'
+        },
+        'why': 'Devices can be stolen, damaged, or infected by ransomware (which locks your files). Without automated, separate backups, you run a high risk of losing your photos and important documents forever.',
+        'improve': 'Set up automatic, scheduled backups to a secure cloud service (like iCloud, Google Drive) or use automated backup software with an external hard drive.',
+        'icon': 'fa-database'
+    },
+    {
+        'key': 'q9_phishing_recognition',
+        'title': 'Unexpected Email Attachments',
+        'q_text': 'When you receive an unexpected attachment, what do you do?',
+        'options': {
+            1: 'Open it — Curiosity gets the better of me',
+            2: 'Check the sender name — If it looks familiar, I open it',
+            3: 'Verify with the sender — I contact them through another channel'
+        },
+        'why': 'Unexpected attachments are a common method for delivering malware and ransomware. Scammers can easily spoof the name of a contact, or your contact\'s account itself might be hacked.',
+        'improve': 'Never open unexpected attachments. If you think it might be genuine, contact the sender via text or a call (not reply email) to verify first.',
+        'icon': 'fa-file-shield'
+    },
+    {
+        'key': 'q10_password_manager',
+        'title': 'Password Managers',
+        'q_text': 'Do you use a password manager?',
+        'options': {
+            1: 'No — I memorize all my passwords',
+            2: 'No — I write them down or store them in a file',
+            3: 'Yes — I use my browser\'s built-in password manager'
+        },
+        'why': 'Memorized passwords tend to be short and simple, while written-down passwords can be lost or seen by others. Browser-based managers are better but do not offer the same protection as standalone dedicated tools.',
+        'improve': 'Adopt a dedicated password manager (such as Bitwarden or 1Password) to generate, store, and automatically fill unique, strong passwords.',
+        'icon': 'fa-vault'
+    }
+] %}
+
+{% set weak_questions = [] %}
+{% for q_def in questions_map %}
+    {% set answer_val = survey|attr(q_def.key) %}
+    {% if answer_val is not none and answer_val < 4 %}
+        {% set _ = weak_questions.append((q_def, answer_val)) %}
+    {% endif %}
+{% endfor %}
+
+<div class="container-fluid px-4 py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-9 col-xl-8">
+            <div class="card border-0 shadow-sm mb-4" style="border-radius: 8px;">
+                <div class="card-body p-4 p-md-5">
+                    {% if survey %}
+                    <div class="text-center mb-4">
+                        {% set sc = survey.category_color %}
+                        {% set overall = survey.awareness_score %}
+                        <div class="score-circle score-circle-lg mx-auto mb-3" style="--score-color: {{ sc }}; --score-deg: {{ overall * 3.6 }}deg;">
+                            <span class="score-value">{{ overall }}</span>
+                        </div>
+                        <h4 class="fw-bold mb-2" style="font-family: 'Poppins', sans-serif;">Your Security Awareness is {{ survey.category_label }}</h4>
+                        <span class="badge bg-{{ survey.category_color }} mb-3" style="font-size: 0.875rem;">Score: {{ overall }}/100</span>
+                        
+                        <p class="text-muted small mx-auto" style="max-width: 600px; font-size: 0.9rem;">
+                            {% if survey.score_category == 'high' %}
+                            Excellent! You follow strong security habits and possess a high level of awareness. You do a great job protecting your digital identity. Keep it up!
+                            {% elif survey.score_category == 'medium' %}
+                            Good effort! You have solid baseline security habits, but there are a few important gaps that leave you exposed. Review the recommendations below to strengthen your digital shield.
+                            {% else %}
+                            Your security awareness score is low, which means you have several habits that put your accounts and personal files at risk. Follow the guides below to build a stronger security foundation.
+                            {% endif %}
+                        </p>
+                        <p class="text-muted" style="font-size: 0.75rem;">Completed on {{ survey.completed_at.strftime('%B %d, %Y at %H:%M') if survey.completed_at }}</p>
+                    </div>
+
+                    <div class="alert alert-info small d-flex align-items-center gap-2 mb-5">
+                        <i class="fa-solid fa-circle-info fa-lg text-primary"></i>
+                        <span>This score has been factored into your Privacy Health Score and Security Recommendations.</span>
+                    </div>
+
+                    <!-- Breakdown -->
+                    <h5 class="text-start mb-4 fw-bold" style="font-family: 'Poppins', sans-serif;">Personalized Improvement Guide</h5>
+                    
+                    {% if weak_questions|length > 0 %}
+                    <p class="text-muted text-start mb-4 small">Based on your survey answers, here are the key areas where your security habits could be stronger. We have omitted sections where you already demonstrate strong security awareness.</p>
+                    
+                    <div class="row g-4 text-start">
+                        {% for q_def, answer_val in weak_questions %}
+                        {% set status_label = 'Moderate' if answer_val == 3 else 'At Risk' %}
+                        {% set status_color = 'warning' if answer_val == 3 else 'danger' %}
+                        {% set border_color = '#D97706' if answer_val == 3 else '#DC2626' %}
+                        
+                        <div class="col-md-12">
+                            <div class="card border-0 shadow-sm" style="border-left: 5px solid {{ border_color }} !important; border-radius: 8px; background-color: #FAFBFC;">
+                                <div class="card-body p-4">
+                                    <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="p-2 rounded bg-white shadow-xs">
+                                                <i class="fa-solid {{ q_def.icon }} text-primary fa-lg"></i>
+                                            </div>
+                                            <div>
+                                                <h6 class="mb-0 fw-bold" style="font-family: 'Poppins', sans-serif;">{{ q_def.title }}</h6>
+                                                <span class="text-muted" style="font-size: 0.75rem;">{{ q_def.q_text }}</span>
+                                            </div>
+                                        </div>
+                                        <span class="badge bg-{{ status_color }} shrink-0">{{ status_label }}</span>
+                                    </div>
+                                    
+                                    <div class="row g-3">
+                                        <div class="col-lg-6">
+                                            <div class="mb-3 p-2 rounded" style="background-color: #F1F5F9; border: 1px solid #E2E8F0;">
+                                                <small class="text-muted fw-bold d-block uppercase tracking-wider mb-1" style="font-size: 0.65rem;">YOUR CURRENT HABIT</small>
+                                                <p class="small mb-0 text-dark" style="font-size: 0.85rem; font-weight: 500;">"{{ q_def.options.get(answer_val) }}"</p>
+                                            </div>
+                                            <div>
+                                                <small class="text-muted fw-bold d-block uppercase tracking-wider mb-1" style="font-size: 0.65rem;">WHY THIS IS RISKY</small>
+                                                <p class="small mb-0 text-secondary" style="font-size: 0.85rem; line-height: 1.4;">{{ q_def.why }}</p>
+                                            </div>
+                                        </div>
+                                        <div class="col-lg-6">
+                                            <div class="p-3 bg-white border rounded h-100" style="border-left: 3px solid #2563EB !important;">
+                                                <small class="text-primary fw-bold d-block uppercase tracking-wider mb-2" style="font-size: 0.65rem;">HOW TO IMPROVE</small>
+                                                <p class="small mb-0 text-dark" style="line-height: 1.5; font-size: 0.85rem;">{{ q_def.improve }}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="card border-0 shadow-sm p-4 text-center" style="border-left: 5px solid #059669 !important; border-radius: 8px; background-color: #F0FDF4;">
+                        <i class="fa-solid fa-circle-check text-success fa-3x mb-3"></i>
+                        <h6 class="fw-bold text-success mb-2" style="font-family: 'Poppins', sans-serif;">Outstanding Security Habits!</h6>
+                        <p class="small mb-0 text-secondary mx-auto" style="max-width: 500px;">
+                            You selected the safest options for every question in our survey. You have a stellar understanding of digital privacy, password managers, multi-factor authentication, phishing threats, and device backups. There are no critical recommendations for you to improve at this time. Excellent work!
+                        </p>
+                    </div>
+                    {% endif %}
+
+                    <div class="mt-5 text-center">
+                        <a href="{{ url_for('survey.security_survey') }}" class="btn btn-primary" style="background-color: #2563EB;">Retake Survey</a>
+                        <a href="{{ url_for('dashboard.index') }}" class="btn btn-outline-secondary ms-2">Back to Dashboard</a>
+                    </div>
+                    {% else %}
+                    <div class="text-center text-muted py-5">
+                        <i class="fa-solid fa-clipboard-question fa-3x mb-3"></i>
+                        <h5 class="fw-bold">No Survey Results Yet</h5>
+                        <p class="small">Complete the security awareness survey to see your results here.</p>
+                        <a href="{{ url_for('survey.security_survey') }}" class="btn btn-primary mt-2" style="background-color: #2563EB;">Take Survey</a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

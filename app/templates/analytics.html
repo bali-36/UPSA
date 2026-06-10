@@ -1,0 +1,204 @@
+{% extends 'base.html' %}
+
+{% block title %}Analytics{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+    <h4 class="mb-4" style="font-family: 'Poppins', sans-serif; font-weight: 600;">Behavioral Analytics</h4>
+
+    <div class="row g-4 mb-4">
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0 fw-semibold">Privacy Score Trend</h6>
+                    <select class="form-select form-select-sm chart-filter" style="width: auto;" data-chart="privacy">
+                        <option value="daily">Daily View</option>
+                        <option value="weekly">Weekly View</option>
+                        <option value="monthly">Monthly View</option>
+                    </select>
+                </div>
+                <div class="card-body"><canvas id="privacyTrendChart" height="200"></canvas></div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0 fw-semibold">Risk Level Trend</h6>
+                    <select class="form-select form-select-sm chart-filter" style="width: auto;" data-chart="risk">
+                        <option value="daily">Daily View</option>
+                        <option value="weekly">Weekly View</option>
+                        <option value="monthly">Monthly View</option>
+                    </select>
+                </div>
+                <div class="card-body"><canvas id="riskTrendChart" height="200"></canvas></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0 fw-semibold">Login Activity</h6>
+                    <select class="form-select form-select-sm chart-filter" style="width: auto;" data-chart="login">
+                        <option value="daily">Daily View</option>
+                        <option value="weekly">Weekly View</option>
+                        <option value="monthly">Monthly View</option>
+                    </select>
+                </div>
+                <div class="card-body"><canvas id="loginActivityChart" height="200"></canvas></div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0 fw-semibold">Experience Trend</h6>
+                    <select class="form-select form-select-sm chart-filter" style="width: auto;" data-chart="frustration">
+                        <option value="daily">Daily View</option>
+                        <option value="weekly">Weekly View</option>
+                        <option value="monthly">Monthly View</option>
+                    </select>
+                </div>
+                <div class="card-body"><canvas id="frustrationTrendChart" height="200"></canvas></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+async function fetchChartData(endpoint, view) {
+    const resp = await fetch(`/api/analytics/${endpoint}?view=${view}`);
+    const json = await resp.json();
+    return json.data || [];
+}
+
+function createLineChart(ctx, labels, data, color, fill) {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const textColor = isDark ? '#94A3B8' : '#6B7B8F';
+    const gridColor = isDark ? '#334155' : '#E2E8F0';
+    return new Chart(ctx, {
+        type: 'line',
+        data: { labels: labels, datasets: [{ data: data, borderColor: color, backgroundColor: fill, fill: true, tension: 0.3, pointRadius: 3 }] },
+        options: { 
+            responsive: true, 
+            plugins: { legend: { display: false } }, 
+            scales: { 
+                y: { grid: { color: gridColor }, ticks: { color: textColor } }, 
+                x: { grid: { display: false }, ticks: { color: textColor } } 
+            } 
+        }
+    });
+}
+
+async function updateChart(chartType, view) {
+    if (chartType === 'privacy' && window.privacyChart) {
+        const data = await fetchChartData('privacy-trend', view);
+        window.privacyChart.data.labels = data.map(d => d.date);
+        window.privacyChart.data.datasets[0].data = data.map(d => d.score);
+        window.privacyChart.update();
+    } else if (chartType === 'risk' && window.riskChart) {
+        const data = await fetchChartData('risk-trend', view);
+        window.riskChart.data.labels = data.map(d => d.date);
+        window.riskChart.data.datasets[0].data = data.map(d => d.risk_score);
+        window.riskChart.update();
+    } else if (chartType === 'login' && window.loginChart) {
+        const data = await fetchChartData('login-activity', view);
+        window.loginChart.data.labels = data.map(d => d.date);
+        window.loginChart.data.datasets[0].data = data.map(d => d.successful);
+        window.loginChart.data.datasets[1].data = data.map(d => d.failed);
+        window.loginChart.update();
+    } else if (chartType === 'frustration' && window.frustChart) {
+        const data = await fetchChartData('frustration-trend', view);
+        window.frustChart.data.labels = data.map(d => d.date);
+        window.frustChart.data.datasets[0].data = data.map(d => d.frustration_score);
+        window.frustChart.update();
+    }
+}
+
+async function initCharts() {
+    // Privacy trend
+    const privData = await fetchChartData('privacy-trend', 'daily');
+    window.privacyChart = createLineChart(
+        document.getElementById('privacyTrendChart').getContext('2d'),
+        privData.map(d => d.date), privData.map(d => d.score), '#2563EB', 'rgba(37,99,235,0.1)'
+    );
+
+    // Risk trend
+    const riskData = await fetchChartData('risk-trend', 'daily');
+    window.riskChart = createLineChart(
+        document.getElementById('riskTrendChart').getContext('2d'),
+        riskData.map(d => d.date), riskData.map(d => d.risk_score), '#D97706', 'rgba(217,119,6,0.1)'
+    );
+
+    // Login activity
+    const loginData = await fetchChartData('login-activity', 'daily');
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const textColor = isDark ? '#94A3B8' : '#6B7B8F';
+    const gridColor = isDark ? '#334155' : '#E2E8F0';
+    window.loginChart = new Chart(document.getElementById('loginActivityChart').getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: loginData.map(d => d.date),
+            datasets: [
+                { label: 'Successful', data: loginData.map(d => d.successful), backgroundColor: '#059669' },
+                { label: 'Failed', data: loginData.map(d => d.failed), backgroundColor: '#DC2626' }
+            ]
+        },
+        options: { 
+            responsive: true, 
+            scales: { 
+                y: { grid: { color: gridColor }, ticks: { color: textColor } }, 
+                x: { grid: { display: false }, ticks: { color: textColor } } 
+            },
+            plugins: {
+                legend: { labels: { color: textColor } }
+            }
+        }
+    });
+
+    // Frustration trend
+    const frustData = await fetchChartData('frustration-trend', 'daily');
+    window.frustChart = createLineChart(
+        document.getElementById('frustrationTrendChart').getContext('2d'),
+        frustData.map(d => d.date), frustData.map(d => d.frustration_score), '#0D9488', 'rgba(13,148,136,0.1)'
+    );
+
+    // Hook up chart filters
+    document.querySelectorAll('.chart-filter').forEach(filterEl => {
+        filterEl.addEventListener('change', function() {
+            const chartType = this.getAttribute('data-chart');
+            const view = this.value;
+            updateChart(chartType, view);
+        });
+    });
+}
+
+document.addEventListener('DOMContentLoaded', initCharts);
+
+window.addEventListener('themeChanged', function(e) {
+    const isDark = e.detail.theme === 'dark';
+    const textColor = isDark ? '#94A3B8' : '#6B7B8F';
+    const gridColor = isDark ? '#334155' : '#E2E8F0';
+
+    function updateChartTheme(chart) {
+        if (!chart) return;
+        if (chart.options.scales.y) {
+            chart.options.scales.y.grid.color = gridColor;
+            if (chart.options.scales.y.ticks) chart.options.scales.y.ticks.color = textColor;
+        }
+        if (chart.options.scales.x) {
+            if (chart.options.scales.x.ticks) chart.options.scales.x.ticks.color = textColor;
+        }
+        if (chart.options.plugins && chart.options.plugins.legend && chart.options.plugins.legend.labels) {
+            chart.options.plugins.legend.labels.color = textColor;
+        }
+        chart.update();
+    }
+
+    updateChartTheme(window.privacyChart);
+    updateChartTheme(window.riskChart);
+    updateChartTheme(window.loginChart);
+    updateChartTheme(window.frustChart);
+});
+</script>
+{% endblock %}

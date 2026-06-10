@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+
+{% block title %}Risk Rules{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+    <div class="row g-0">
+        <div class="col-auto admin-sidebar" style="width: 240px; min-height: calc(100vh - 56px);">
+            <div class="d-flex flex-column py-3">
+                <a href="{{ url_for('admin.dashboard') }}" class="nav-link"><i class="fa-solid fa-gauge-high me-2"></i>Dashboard</a>
+                <a href="{{ url_for('admin.users') }}" class="nav-link"><i class="fa-solid fa-users me-2"></i>User Management</a>
+                <a href="{{ url_for('admin.audit_logs') }}" class="nav-link"><i class="fa-solid fa-clipboard-list me-2"></i>Audit Logs</a>
+                <a href="{{ url_for('admin.risk_rules') }}" class="nav-link active"><i class="fa-solid fa-shield-halved me-2"></i>Risk Rules</a>
+                <a href="{{ url_for('dashboard.index') }}" class="nav-link"><i class="fa-solid fa-arrow-left me-2"></i>Back to App</a>
+            </div>
+        </div>
+        <div class="col p-4">
+            <h4 class="mb-4" style="font-family: 'Poppins', sans-serif; font-weight: 600;">Risk Scoring Rules</h4>
+
+            <div class="row g-4">
+                <div class="col-lg-8">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-white py-3">
+                            <h6 class="mb-0 fw-semibold">Risk Factors</h6>
+                        </div>
+                        <div class="card-body p-4">
+                            <form method="POST" action="{{ url_for('admin.update_risk_rules') }}">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label small">New Device</label>
+                                        <input type="number" class="form-control" name="new_device" value="{{ rules.new_device }}" min="0" max="100">
+                                        <div class="form-text">Points when logging in from a new device</div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small">New Browser</label>
+                                        <input type="number" class="form-control" name="new_browser" value="{{ rules.new_browser }}" min="0" max="100">
+                                        <div class="form-text">Points when using a different browser</div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small">New Location</label>
+                                        <input type="number" class="form-control" name="new_location" value="{{ rules.new_location }}" min="0" max="100">
+                                        <div class="form-text">Points when logging in from a new location</div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small">Unusual Time</label>
+                                        <input type="number" class="form-control" name="unusual_time" value="{{ rules.unusual_time }}" min="0" max="100">
+                                        <div class="form-text">Points for logins outside usual hours</div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small">Failed Attempts</label>
+                                        <input type="number" class="form-control" name="failed_attempts" value="{{ rules.failed_attempts }}" min="0" max="100">
+                                        <div class="form-text">Points after multiple failed login attempts</div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small">Impossible Travel</label>
+                                        <input type="number" class="form-control" name="impossible_travel" value="{{ rules.impossible_travel }}" min="0" max="100">
+                                        <div class="form-text">Points for physically impossible travel pattern</div>
+                                    </div>
+                                </div>
+
+                                <hr class="my-4">
+
+                                <h6 class="mb-3">Risk Thresholds</h6>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label small">Low Risk Max (0-100)</label>
+                                        <input type="number" class="form-control" name="low_threshold" value="{{ thresholds.low }}" min="0" max="100">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small">Medium Risk Max (0-100)</label>
+                                        <input type="number" class="form-control" name="medium_threshold" value="{{ thresholds.medium }}" min="0" max="100">
+                                    </div>
+                                </div>
+
+                                <div class="mt-4">
+                                    <button type="submit" class="btn btn-primary" style="background-color: #2563EB;">Save Changes</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-white py-3">
+                            <h6 class="mb-0 fw-semibold">Risk Level Guide</h6>
+                        </div>
+                        <div class="card-body p-3">
+                            <div class="mb-3 p-2 rounded" style="background-color: rgba(5,150,105,0.1);">
+                                <div class="d-flex align-items-center gap-2 mb-1">
+                                    <span class="badge bg-success">Low</span>
+                                    <span class="small fw-medium">0–{{ thresholds.low }} points</span>
+                                </div>
+                                <small class="text-muted">Login allowed without additional verification</small>
+                            </div>
+                            <div class="mb-3 p-2 rounded" style="background-color: rgba(217,119,6,0.1);">
+                                <div class="d-flex align-items-center gap-2 mb-1">
+                                    <span class="badge bg-warning">Medium</span>
+                                    <span class="small fw-medium">{{ thresholds.low + 1 }}–{{ thresholds.medium }} points</span>
+                                </div>
+                                <small class="text-muted">MFA verification required</small>
+                            </div>
+                            <div class="p-2 rounded" style="background-color: rgba(220,38,38,0.1);">
+                                <div class="d-flex align-items-center gap-2 mb-1">
+                                    <span class="badge bg-danger">High</span>
+                                    <span class="small fw-medium">{{ thresholds.medium + 1 }}+ points</span>
+                                </div>
+                                <small class="text-muted">Login blocked</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

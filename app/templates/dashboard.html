@@ -1,0 +1,199 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+    <!-- Welcome Banner -->
+    <div class="card mb-4 text-white" style="background-color: #0A1628; border-radius: 8px;">
+        <div class="card-body d-flex align-items-center justify-content-between p-4">
+            <div>
+                <h4 class="mb-1" style="font-family: 'Poppins', sans-serif;">Welcome back, {{ current_user.full_name.split(' ')[0] }}!</h4>
+                <p class="mb-0 text-white-50 small">Here's your security status today.</p>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <div class="text-end me-3">
+                    <div class="small text-white-50">Your Privacy Score</div>
+                    <div class="fw-semibold">{{ privacy_score.category_label }}</div>
+                </div>
+                {% set score_color = privacy_score.score_color_hex %}
+                <div class="score-circle" style="--score-color: {{ score_color }}; --score-deg: {{ privacy_score.overall_score * 3.6 }}deg;">
+                    <span class="score-value">{{ privacy_score.overall_score }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Score Overview Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3 col-sm-6">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="small text-muted mb-2">Privacy Health</div>
+                    <div class="d-flex align-items-end gap-2">
+                        <span class="fs-2 fw-bold" style="font-family: 'JetBrains Mono', monospace; color: {{ privacy_score.score_color_hex }};">
+                            {{ privacy_score.overall_score }}
+                        </span>
+                        <span class="badge" style="background-color: {{ privacy_score.score_color_hex }};">{{ privacy_score.category_label }}</span>
+                    </div>
+                    <div class="progress mt-2" style="height: 4px;">
+                        <div class="progress-bar" style="width: {{ privacy_score.overall_score }}%; background-color: {{ privacy_score.score_color_hex }};"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="small text-muted mb-2">Security Score</div>
+                    <div class="d-flex align-items-end gap-2">
+                        {% set sec_color = '#059669' if security_score.total_score >= 60 else '#D97706' if security_score.total_score >= 35 else '#DC2626' %}
+                        <span class="fs-2 fw-bold" style="font-family: 'JetBrains Mono', monospace; color: {{ sec_color }};">
+                            {{ security_score.total_score }}
+                        </span>
+                        <span class="badge" style="background-color: {{ sec_color }};">
+                            {{ 'Good' if security_score.total_score >= 60 else 'Fair' if security_score.total_score >= 35 else 'Needs Work' }}
+                        </span>
+                    </div>
+                    <div class="progress mt-2" style="height: 4px;">
+                        <div class="progress-bar" style="width: {{ security_score.total_score }}%; background-color: {{ sec_color }};"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="small text-muted mb-2">Risk Level</div>
+                    {% set risk_colors = {'low': '#059669', 'medium': '#D97706', 'high': '#DC2626'} %}
+                    {% set risk_color = risk_colors.get(risk_status.current_level, '#6B7B8F') %}
+                    <div class="d-flex align-items-end gap-2">
+                        <span class="fs-3 fw-bold text-uppercase" style="color: {{ risk_color }};">
+                            {{ risk_status.current_level }}
+                        </span>
+                    </div>
+                    <div class="progress mt-2" style="height: 4px;">
+                        <div class="progress-bar" style="width: {{ risk_status.current_score if risk_status.current_score else 10 }}%; background-color: {{ risk_color }};"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="small text-muted mb-2">Experience</div>
+                    <div class="d-flex align-items-end gap-2">
+                        {% set f_colors = {'low': '#059669', 'medium': '#D97706', 'high': '#DC2626'} %}
+                        {% set f_color = f_colors.get(frustration.level, '#6B7B8F') %}
+                        <span class="fs-5 fw-bold" style="color: {{ f_color }};">
+                            {{ frustration.level_label }}
+                        </span>
+                    </div>
+                    <small class="text-muted">{{ 'No issues detected' if frustration.level == 'low' else 'Some friction detected' if frustration.level == 'medium' else 'High frustration detected' }}</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="d-flex gap-2 flex-wrap mb-4">
+        <a href="{{ url_for('privacy.recalculate') }}" class="btn btn-primary btn-sm" style="background-color: #2563EB;">
+            <i class="fa-solid fa-magnifying-glass me-1"></i>Run Privacy Check
+        </a>
+        <a href="{{ url_for('policy.index') }}" class="btn btn-outline-primary btn-sm">
+            <i class="fa-solid fa-upload me-1"></i>Upload Policy
+        </a>
+        <a href="{{ url_for('survey.security_survey') }}" class="btn btn-outline-primary btn-sm">
+            <i class="fa-solid fa-clipboard me-1"></i>Take Survey
+        </a>
+        <a href="{{ url_for('recommendations.index') }}" class="btn btn-outline-primary btn-sm">
+            <i class="fa-solid fa-lightbulb me-1"></i>View Recommendations
+        </a>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="row g-4">
+        <!-- Recent Activity -->
+        <div class="col-lg-6">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center py-3">
+                    <h6 class="mb-0 fw-semibold" style="font-family: 'Poppins', sans-serif;">Recent Activity</h6>
+                    <a href="{{ url_for('analytics.index') }}" class="small text-decoration-none" style="color: #2563EB;">View All</a>
+                </div>
+                <div class="card-body p-0">
+                    {% if recent_activity %}
+                    <div class="p-3">
+                        {% for log in recent_activity %}
+                        <div class="d-flex gap-3 mb-3 pb-3 {% if not loop.last %}border-bottom{% endif %}">
+                            <div class="flex-shrink-0 mt-1">
+                                {% if log.result == 'success' %}
+                                <i class="fa-solid fa-circle-check text-success"></i>
+                                {% elif log.result == 'failure' %}
+                                <i class="fa-solid fa-circle-xmark text-danger"></i>
+                                {% elif log.result == 'blocked' %}
+                                <i class="fa-solid fa-shield-halved text-warning"></i>
+                                {% else %}
+                                <i class="fa-solid fa-circle-info text-info"></i>
+                                {% endif %}
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="small">{{ log.action_label }}</div>
+                                <div class="text-muted" style="font-size: 0.75rem;">
+                                    {% if log.created_at %}{{ log.created_at.strftime('%b %d, %Y at %H:%M') }}{% else %}Recently{% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="p-4 text-center text-muted">
+                        <i class="fa-solid fa-clock-rotate-left fa-2x mb-2"></i>
+                        <p class="small mb-0">No recent activity to display.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Top Recommendations -->
+        <div class="col-lg-6">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center py-3">
+                    <h6 class="mb-0 fw-semibold" style="font-family: 'Poppins', sans-serif;">Top Recommendations</h6>
+                    <a href="{{ url_for('recommendations.index') }}" class="small text-decoration-none" style="color: #2563EB;">View All</a>
+                </div>
+                <div class="card-body p-0">
+                    {% if recommendations %}
+                    <div class="p-3">
+                        {% for rec in recommendations %}
+                        <div class="d-flex gap-3 mb-3 pb-3 {% if not loop.last %}border-bottom{% endif %}">
+                            <div class="flex-shrink-0 mt-1">
+                                <i class="{{ rec.category_icon }}" style="color: #2563EB;"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="d-flex align-items-center gap-2 mb-1">
+                                    <span class="small fw-medium">{{ rec.title }}</span>
+                                    <span class="badge bg-{{ rec.priority_color }}" style="font-size: 0.65rem;">{{ rec.priority_label }}</span>
+                                </div>
+                                <p class="text-muted small mb-1" style="font-size: 0.8125rem;">{{ rec.description[:100] }}...</p>
+                                {% if rec.impact_estimate %}
+                                <small class="text-success" style="font-size: 0.75rem;">
+                                    <i class="fa-solid fa-arrow-up me-1"></i>+{{ rec.impact_estimate }} points
+                                </small>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="p-4 text-center text-muted">
+                        <i class="fa-solid fa-check-circle fa-2x text-success mb-2"></i>
+                        <p class="small mb-0">All caught up! No pending recommendations.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

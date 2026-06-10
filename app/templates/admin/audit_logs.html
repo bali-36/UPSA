@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+
+{% block title %}Audit Logs{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+    <div class="row g-0">
+        <div class="col-auto admin-sidebar" style="width: 240px; min-height: calc(100vh - 56px);">
+            <div class="d-flex flex-column py-3">
+                <a href="{{ url_for('admin.dashboard') }}" class="nav-link"><i class="fa-solid fa-gauge-high me-2"></i>Dashboard</a>
+                <a href="{{ url_for('admin.users') }}" class="nav-link"><i class="fa-solid fa-users me-2"></i>User Management</a>
+                <a href="{{ url_for('admin.audit_logs') }}" class="nav-link active"><i class="fa-solid fa-clipboard-list me-2"></i>Audit Logs</a>
+                <a href="{{ url_for('admin.risk_rules') }}" class="nav-link"><i class="fa-solid fa-shield-halved me-2"></i>Risk Rules</a>
+                <a href="{{ url_for('dashboard.index') }}" class="nav-link"><i class="fa-solid fa-arrow-left me-2"></i>Back to App</a>
+            </div>
+        </div>
+        <div class="col p-4">
+            <h4 class="mb-4" style="font-family: 'Poppins', sans-serif; font-weight: 600;">Audit Logs</h4>
+
+            <!-- Filters -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body">
+                    <form method="GET" class="row g-2 align-items-end">
+                        <div class="col-md-3">
+                            <label class="form-label small">Action</label>
+                            <select class="form-select form-select-sm" name="action">
+                                <option value="">All Actions</option>
+                                {% for a in actions %}
+                                <option value="{{ a }}" {{ 'selected' if a == action_filter }}>{{ a.replace('_', ' ').title() }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small">Result</label>
+                            <select class="form-select form-select-sm" name="result">
+                                <option value="">All Results</option>
+                                <option value="success" {{ 'selected' if result_filter == 'success' }}>Success</option>
+                                <option value="failure" {{ 'selected' if result_filter == 'failure' }}>Failure</option>
+                                <option value="blocked" {{ 'selected' if result_filter == 'blocked' }}>Blocked</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-primary btn-sm w-100" style="background-color: #2563EB;">Filter</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm">
+                <div class="table-responsive">
+                    <table class="table table-hover table-sm mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="small">Timestamp</th>
+                                <th class="small">User</th>
+                                <th class="small">Action</th>
+                                <th class="small">IP Address</th>
+                                <th class="small">Result</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for log in logs %}
+                            <tr>
+                                <td class="small text-muted" style="white-space: nowrap;">{{ log.created_at.strftime('%Y-%m-%d %H:%M:%S') if log.created_at }}</td>
+                                <td class="small">{{ log.user.full_name if log.user else 'Anonymous' }}</td>
+                                <td class="small">{{ log.action_label }}</td>
+                                <td class="small text-muted">{{ log.ip_address or '—' }}</td>
+                                <td><span class="badge bg-{{ log.result_color }}" style="font-size: 0.7rem;">{{ log.result.title() }}</span></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% if pages > 1 %}
+                <div class="card-footer">
+                    <nav><ul class="pagination pagination-sm justify-content-center mb-0">
+                        {% for p in range(1, pages + 1) %}
+                        <li class="page-item {{ 'active' if p == current_page else '' }}">
+                            <a class="page-link" href="?page={{ p }}{% if action_filter %}&action={{ action_filter }}{% endif %}{% if result_filter %}&result={{ result_filter }}{% endif %}">{{ p }}</a>
+                        </li>
+                        {% endfor %}
+                    </ul></nav>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

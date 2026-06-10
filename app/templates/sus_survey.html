@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block title %}SUS Evaluation{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-4 p-md-5">
+                    <div class="text-center mb-4">
+                        <i class="fa-solid fa-star text-success fa-2x mb-2"></i>
+                        <h4 style="font-family: 'Poppins', sans-serif; font-weight: 600;">System Usability Scale (SUS)</h4>
+                        <p class="text-muted small">Rate your experience with UPSA. Your feedback helps us improve.</p>
+                    </div>
+
+                    <form method="POST" action="{{ url_for('survey.sus_survey') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                        <div class="vstack gap-4">
+                            {% for q in questions %}
+                            <div class="card border p-3">
+                                <div class="mb-2">
+                                    <span class="text-muted small">#{{ q.id }}</span>
+                                    <p class="mb-0 fw-medium small">{{ q.text }}</p>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small class="text-muted" style="font-size: 0.7rem;">Strongly Disagree</small>
+                                    <div class="btn-group" role="group">
+                                        {% for val in range(1, 6) %}
+                                        <input type="radio" class="btn-check" name="q{{ q.id }}" id="q{{ q.id }}_{{ val }}" value="{{ val }}" required {{ 'checked' if val == 3 }}>
+                                        <label class="btn btn-outline-primary btn-sm" for="q{{ q.id }}_{{ val }}">{{ val }}</label>
+                                        {% endfor %}
+                                    </div>
+                                    <small class="text-muted" style="font-size: 0.7rem;">Strongly Agree</small>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="text-center mt-4">
+                            <button type="submit" class="btn btn-success btn-lg px-5">
+                                <i class="fa-solid fa-check me-1"></i>Calculate My SUS Score
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

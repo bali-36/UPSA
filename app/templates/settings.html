@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+
+{% block title %}Settings{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+    <h4 class="mb-4" style="font-family: 'Poppins', sans-serif; font-weight: 600;">Settings</h4>
+
+    <div class="row g-4">
+        <!-- Profile Settings -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3">
+                    <h6 class="mb-0 fw-semibold"><i class="fa-solid fa-user me-2"></i>Profile Information</h6>
+                </div>
+                <div class="card-body p-4">
+                    <form method="POST" action="{{ url_for('settings.update_profile') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="mb-3">
+                            <label class="form-label small fw-medium">Full Name</label>
+                            <input type="text" class="form-control" name="full_name" value="{{ current_user.full_name }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-medium">Email Address</label>
+                            <input type="email" class="form-control" value="{{ current_user.email }}" disabled>
+                            <div class="form-text">Contact admin to change your email.</div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-medium">Role</label>
+                            <input type="text" class="form-control" value="{{ current_user.role.title() }}" disabled>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-sm" style="background-color: #2563EB;">Save Changes</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Notification Preferences -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h6 class="mb-0 fw-semibold"><i class="fa-solid fa-bell me-2"></i>Notification Preferences</h6>
+                </div>
+                <div class="card-body p-4">
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="notif_score" {{ 'checked' if notif_prefs.score_changes }}>
+                        <label class="form-check-label small" for="notif_score">Email me when my privacy score changes significantly</label>
+                    </div>
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="notif_recs" {{ 'checked' if notif_prefs.new_recommendations }}>
+                        <label class="form-check-label small" for="notif_recs">Email me about new security recommendations</label>
+                    </div>
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="notif_login" {{ 'checked' if notif_prefs.unusual_login }}>
+                        <label class="form-check-label small" for="notif_login">Email me about unusual login activity</label>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="notif_weekly" {{ 'checked' if notif_prefs.weekly_summary }}>
+                        <label class="form-check-label small" for="notif_weekly">Email me weekly security summary</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Sessions & Notifications -->
+        <div class="col-lg-6">
+            <!-- Active Sessions -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                    <h6 class="mb-0 fw-semibold"><i class="fa-solid fa-desktop me-2"></i>Active Sessions</h6>
+                    <form method="POST" action="{{ url_for('settings.revoke_all_sessions') }}" class="d-inline">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-outline-danger btn-sm">Log Out All Others</button>
+                    </form>
+                </div>
+                <div class="card-body p-0">
+                    {% if sessions %}
+                    <div class="list-group list-group-flush">
+                        {% for sess in sessions %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div class="small">
+                                <div class="fw-medium">{{ sess.device_info or 'Unknown Device' }} — {{ sess.browser_info or 'Unknown Browser' }}</div>
+                                <div class="text-muted" style="font-size: 0.75rem;">
+                                    {{ sess.ip_address }} • Started {{ sess.created_at.strftime('%b %d, %H:%M') if sess.created_at }}
+                                </div>
+                            </div>
+                            {% if loop.index > 1 %}
+                            <form method="POST" action="{{ url_for('settings.revoke_session', session_id=sess.id) }}" class="d-inline">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-sm btn-outline-secondary" style="font-size: 0.7rem;">Revoke</button>
+                            </form>
+                            {% else %}
+                            <span class="badge bg-primary" style="font-size: 0.7rem;">Current</span>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="p-4 text-center text-muted small">No active sessions found.</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Recent Notifications -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                    <h6 class="mb-0 fw-semibold"><i class="fa-solid fa-envelope me-2"></i>Notifications</h6>
+                    {% if unread_count > 0 %}
+                    <form method="POST" action="{{ url_for('settings.read_all_notifications') }}" class="d-inline">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-outline-primary btn-sm" style="font-size: 0.75rem;">Mark All Read</button>
+                    </form>
+                    {% endif %}
+                </div>
+                <div class="card-body p-0">
+                    {% if notifications %}
+                    <div class="list-group list-group-flush">
+                        {% for notif in notifications %}
+                        <div class="list-group-item {{ 'bg-light' if notif.is_read }}">
+                            <div class="d-flex align-items-start gap-2">
+                                <i class="{{ notif.type_icon }} mt-1 text-{{ notif.type_color }}"></i>
+                                <div class="flex-grow-1">
+                                    <div class="small fw-medium">{{ notif.title }}</div>
+                                    <div class="text-muted" style="font-size: 0.8125rem;">{{ notif.message[:100] }}</div>
+                                    <small class="text-muted" style="font-size: 0.7rem;">{{ notif.created_at.strftime('%b %d, %H:%M') if notif.created_at }}</small>
+                                </div>
+                                {% if not notif.is_read %}
+                                <span class="badge bg-primary rounded-pill" style="font-size: 0.5rem;">&nbsp;</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="p-4 text-center text-muted small">No notifications yet.</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

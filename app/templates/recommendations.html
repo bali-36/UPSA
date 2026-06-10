@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+
+{% block title %}Recommendations{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+    <h4 class="mb-4" style="font-family: 'Poppins', sans-serif; font-weight: 600;">Your Personalized Security Recommendations</h4>
+
+    <!-- Potential Improvement -->
+    {% if potential %}
+    <div class="card mb-4" style="background-color: #E8F4FD; border: none;">
+        <div class="card-body d-flex align-items-center gap-4 flex-wrap">
+            <div><i class="fa-solid fa-chart-line text-primary fa-lg"></i></div>
+            <div>
+                <h6 class="mb-1 fw-semibold">Potential Score Improvement</h6>
+                <p class="mb-0 small text-muted">
+                    If you complete all recommendations, your scores could improve to:
+                    Privacy <strong>{{ potential.privacy.current }} → {{ potential.privacy.potential }}</strong>
+                    <span class="mx-2">|</span>
+                    Security <strong>{{ potential.security.current }} → {{ potential.security.potential }}</strong>
+                </p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Filter Tabs -->
+    <ul class="nav nav-pills mb-4">
+        <li class="nav-item">
+            <a class="nav-link {{ 'active' if status == 'all' else '' }}" href="?status=all">All</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {{ 'active' if status == 'pending' else '' }}" href="?status=pending">Pending</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {{ 'active' if status == 'completed' else '' }}" href="?status=completed">Completed</a>
+        </li>
+    </ul>
+
+    <!-- Recommendations List -->
+    {% if recommendations %}
+    <div class="vstack gap-3">
+        {% for rec in recommendations %}
+        <div class="card rec-card-{{ rec.priority }} {{ 'opacity-75' if rec.is_completed }}" style="border: 1px solid #E2E8F0;">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <i class="{{ rec.category_icon }}" style="color: #2563EB;"></i>
+                            <span class="badge bg-{{ rec.priority_color }}" style="font-size: 0.7rem;">{{ rec.priority_label }}</span>
+                            <span class="badge bg-light text-dark border" style="font-size: 0.7rem;">{{ rec.category_label }}</span>
+                            {% if rec.is_completed %}
+                            <span class="badge bg-success" style="font-size: 0.7rem;"><i class="fa-solid fa-check me-1"></i>Completed</span>
+                            {% endif %}
+                        </div>
+                        <h6 class="mb-2" style="font-family: 'Poppins', sans-serif;">{{ rec.title }}</h6>
+                        <p class="small text-muted mb-2">{{ rec.description }}</p>
+                        <div class="alert alert-light border py-2 small mb-2">
+                            <i class="fa-solid fa-circle-info text-primary me-1"></i>{{ rec.plain_explanation }}
+                        </div>
+                        {% if rec.impact_estimate and not rec.is_completed %}
+                        <small class="text-success"><i class="fa-solid fa-arrow-up me-1"></i>Could improve your score by +{{ rec.impact_estimate }} points</small>
+                        {% endif %}
+                    </div>
+                    {% if not rec.is_completed %}
+                    <form method="POST" action="{{ url_for('recommendations.complete', rec_id=rec.id) }}" class="ms-3 flex-shrink-0">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-outline-success btn-sm">
+                            <i class="fa-solid fa-check me-1"></i>Done
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="card border-0 shadow-sm">
+        <div class="card-body text-center py-5 text-muted">
+            <i class="fa-solid fa-trophy text-success fa-3x mb-3"></i>
+            <h5>All Caught Up!</h5>
+            <p class="small mb-0">No recommendations in this category. Great job maintaining your security!</p>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

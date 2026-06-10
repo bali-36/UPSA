@@ -1,0 +1,21 @@
+{
+  "trained_at": "2026-06-04T21:24:55.243529",
+  "version": "1.0.0",
+  "samples": 500,
+  "features": [
+    "q1_reuse_password",
+    "q2_mfa_usage",
+    "q3_email_verify",
+    "q4_location_perm",
+    "q5_privacy_review",
+    "q6_public_wifi",
+    "q7_software_updates",
+    "q8_backup_habits",
+    "q9_phishing_recognition",
+    "q10_password_manager",
+    "mfa_enabled",
+    "password_age_days",
+    "login_failures_7d",
+    "privacy_score"
+  ]
+}

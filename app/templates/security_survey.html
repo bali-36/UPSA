@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+
+{% block title %}Security Awareness Survey{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-4 p-md-5">
+                    <div class="text-center mb-4">
+                        <i class="fa-solid fa-shield-halved text-primary fa-2x mb-2"></i>
+                        <h4 style="font-family: 'Poppins', sans-serif; font-weight: 600;">Security Awareness Survey</h4>
+                        <p class="text-muted small">Answer honestly — there are no wrong answers. This helps us give you better recommendations.</p>
+                    </div>
+
+                    <!-- Progress -->
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between small mb-1">
+                            <span class="text-muted">Question <span id="currentQ">1</span> of {{ questions|length }}</span>
+                            <span class="text-muted" id="progressPct">{{ (100 / questions|length)|int }}%</span>
+                        </div>
+                        <div class="progress" style="height: 6px;">
+                            <div class="progress-bar" id="progressBar" style="width: {{ (100 / questions|length)|int }}%"></div>
+                        </div>
+                    </div>
+
+                    <form method="POST" action="{{ url_for('survey.security_survey') }}" id="surveyForm">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                        {% for q in questions %}
+                        {% set q_loop = loop %}
+                        <div class="survey-question {{ 'active' if loop.first }}" data-index="{{ loop.index }}">
+                            <h6 class="mb-4">{{ loop.index }}. {{ q.text }}</h6>
+                            <div class="vstack gap-2">
+                                {% for opt in q.options %}
+                                <label class="form-check card p-3 border hover-card cursor-pointer" style="cursor: pointer;">
+                                    <div class="form-check m-0">
+                                        <input class="form-check-input" type="radio" name="q{{ q_loop.index }}" value="{{ opt.value }}" required>
+                                        <span class="form-check-label small">{{ opt.label }}</span>
+                                    </div>
+                                </label>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endfor %}
+
+                        <div class="d-flex justify-content-between mt-4">
+                            <button type="button" class="btn btn-outline-secondary" id="prevBtn" onclick="changeQuestion(-1)" style="display: none;">
+                                <i class="fa-solid fa-arrow-left me-1"></i>Previous
+                            </button>
+                            <button type="button" class="btn btn-primary ms-auto" id="nextBtn" onclick="changeQuestion(1)" style="background-color: #2563EB;">
+                                Next<i class="fa-solid fa-arrow-right ms-1"></i>
+                            </button>
+                            <button type="submit" class="btn btn-success ms-auto" id="submitBtn" style="display: none;">
+                                <i class="fa-solid fa-check me-1"></i>Submit Survey
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let current = 1;
+const total = {{ questions|length }};
+
+function changeQuestion(dir) {
+    if (dir === 1) {
+        const currentQuestionDiv = document.querySelector(`.survey-question[data-index="${current}"]`);
+        const checkedOption = currentQuestionDiv.querySelector('input[type="radio"]:checked');
+        if (!checkedOption) {
+            alert('Please select an answer before proceeding.');
+            return;
+        }
+    }
+
+    const questions = document.querySelectorAll('.survey-question');
+    questions[current - 1].classList.remove('active');
+    current += dir;
+    questions[current - 1].classList.add('active');
+
+    document.getElementById('currentQ').textContent = current;
+    document.getElementById('progressPct').textContent = Math.round((current / total) * 100) + '%';
+    document.getElementById('progressBar').style.width = Math.round((current / total) * 100) + '%';
+
+    document.getElementById('prevBtn').style.display = current === 1 ? 'none' : 'inline-block';
+    document.getElementById('nextBtn').style.display = current === total ? 'none' : 'inline-block';
+    document.getElementById('submitBtn').style.display = current === total ? 'inline-block' : 'none';
+}
+
+document.getElementById('surveyForm').addEventListener('submit', function(e) {
+    const currentQuestionDiv = document.querySelector(`.survey-question[data-index="${current}"]`);
+    const checkedOption = currentQuestionDiv.querySelector('input[type="radio"]:checked');
+    if (!checkedOption) {
+        e.preventDefault();
+        alert('Please select an answer before submitting the survey.');
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,151 @@
+{% extends 'base.html' %}
+
+{% block title %}Security Center{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+    <h4 class="mb-4" style="font-family: 'Poppins', sans-serif; font-weight: 600;">Security Center</h4>
+
+    <div class="row g-4">
+        <!-- Security Score -->
+        <div class="col-lg-5">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body text-center p-4">
+                    {% set sec_color = '#059669' if security_score.total_score >= 60 else '#D97706' if security_score.total_score >= 35 else '#DC2626' %}
+                    <div class="score-circle score-circle-lg mx-auto mb-3" style="--score-color: {{ sec_color }}; --score-deg: {{ security_score.total_score * 3.6 }}deg;">
+                        <span class="score-value">{{ security_score.total_score }}</span>
+                    </div>
+                    <h5 style="font-family: 'Poppins', sans-serif;">{{ 'Good' if security_score.total_score >= 60 else 'Fair' if security_score.total_score >= 35 else 'Needs Work' }}</h5>
+                    <p class="text-muted small">Security Score out of 100</p>
+                </div>
+            </div>
+
+            <!-- Score Components -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h6 class="mb-0 fw-semibold">Score Breakdown</h6>
+                </div>
+                <div class="card-body p-3">
+                    {% set sec_components = [
+                        ('Multi-Factor Authentication', security_score.mfa.score, security_score.mfa.max),
+                        ('Password Age', security_score.password_age.score, security_score.password_age.max),
+                        ('Security Awareness', security_score.survey.score, security_score.survey.max),
+                        ('Risk History', security_score.risk_history.score, security_score.risk_history.max)
+                    ] %}
+                    {% for label, score, max in sec_components %}
+                    {% set pct = (score / max * 100)|int %}
+                    {% set bar_color = '#059669' if pct >= 70 else '#D97706' if pct >= 40 else '#DC2626' %}
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <small class="fw-medium">{{ label }}</small>
+                            <small class="text-muted" style="font-family: 'JetBrains Mono', monospace;">{{ score }}/{{ max }}</small>
+                        </div>
+                        <div class="progress" style="height: 6px;">
+                            <div class="progress-bar" style="width: {{ pct }}%; background-color: {{ bar_color }};"></div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- MFA & Password Management -->
+        <div class="col-lg-7">
+            <!-- MFA Card -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3">
+                    <h6 class="mb-0 fw-semibold">Multi-Factor Authentication</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div>
+                            <div class="fw-medium">Current Status</div>
+                            {% if user.mfa_enabled %}
+                            <span class="badge bg-success">Enabled</span>
+                            <p class="text-muted small mt-2 mb-0">MFA is protecting your account. We recommend keeping it on.</p>
+                            {% else %}
+                            <span class="badge bg-danger">Disabled</span>
+                            <p class="text-muted small mt-2 mb-0">Enable MFA to add an extra layer of protection to your account.</p>
+                            {% endif %}
+                        </div>
+                        <form method="POST" action="{{ url_for('security.toggle_mfa_route') }}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="hidden" name="action" value="{{ 'disable' if user.mfa_enabled else 'enable' }}">
+                            {% if user.mfa_enabled %}
+                            <button type="submit" class="btn btn-outline-danger btn-sm">Disable MFA</button>
+                            {% else %}
+                            <button type="submit" class="btn btn-success btn-sm">Enable MFA</button>
+                            {% endif %}
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Password Management -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3">
+                    <h6 class="mb-0 fw-semibold">Password Health</h6>
+                </div>
+                <div class="card-body">
+                    {% set pwd_days = security_score.password_age.days_old %}
+                    {% set pwd_status_color = '#059669' if pwd_days < 90 else '#D97706' if pwd_days < 180 else '#DC2626' %}
+                    <div class="mb-3">
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <i class="fa-solid fa-clock" style="color: {{ pwd_status_color }};"></i>
+                            <span>Your password is <strong>{{ pwd_days }}</strong> days old.</span>
+                        </div>
+                        {% if pwd_days < 90 %}
+                        <div class="alert alert-success py-2 small mb-0"><i class="fa-solid fa-check me-1"></i>Your password is fresh and secure.</div>
+                        {% elif pwd_days < 180 %}
+                        <div class="alert alert-warning py-2 small mb-0"><i class="fa-solid fa-exclamation me-1"></i>Consider updating your password soon.</div>
+                        {% else %}
+                        <div class="alert alert-danger py-2 small mb-0"><i class="fa-solid fa-triangle-exclamation me-1"></i>Your password is quite old. Please update it.</div>
+                        {% endif %}
+                    </div>
+
+                    <button class="btn btn-outline-primary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#changePasswordForm">
+                        <i class="fa-solid fa-key me-1"></i>Change Password
+                    </button>
+
+                    <div class="collapse mt-3" id="changePasswordForm">
+                        <form method="POST" action="{{ url_for('security.change_password_route') }}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <div class="mb-2">
+                                <input type="password" class="form-control form-control-sm" name="old_password" placeholder="Current password" required>
+                            </div>
+                            <div class="mb-2">
+                                <input type="password" class="form-control form-control-sm" name="new_password" placeholder="New password" required minlength="8">
+                            </div>
+                            <div class="mb-2">
+                                <input type="password" class="form-control form-control-sm" name="confirm_password" placeholder="Confirm new password" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-sm">Update Password</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ML Predictions Preview -->
+            {% if ml_pred %}
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h6 class="mb-0 fw-semibold">AI Security Insights</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-sm-6">
+                            <div class="small text-muted mb-1">Phishing Risk</div>
+                            <span class="badge bg-{{ ml_pred.phishing_color }}" style="font-size: 0.875rem;">{{ ml_pred.phishing_susceptibility|title }}</span>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="small text-muted mb-1">Account Risk</div>
+                            <span class="badge bg-{{ ml_pred.account_risk_color }}" style="font-size: 0.875rem;">{{ ml_pred.account_risk_level|title }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

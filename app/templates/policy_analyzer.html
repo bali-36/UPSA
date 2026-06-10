@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+
+{% block title %}Policy Analyzer{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+    <h4 class="mb-4" style="font-family: 'Poppins', sans-serif; font-weight: 600;">Privacy Policy Analyzer</h4>
+
+    <!-- Tabbed Upload/Paste Zone -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-0 pt-4 px-4 pb-0">
+            <ul class="nav nav-tabs border-bottom" id="analyzerTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active fw-semibold pb-3 px-4" id="upload-tab" data-bs-toggle="tab" data-bs-target="#upload-pane" type="button" role="tab" aria-controls="upload-pane" aria-selected="true" style="background: none; border: none; font-family: 'Poppins', sans-serif;">
+                        <i class="fa-solid fa-file-arrow-up me-2 text-primary"></i>Upload Document
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link fw-semibold pb-3 px-4" id="paste-tab" data-bs-toggle="tab" data-bs-target="#paste-pane" type="button" role="tab" aria-controls="paste-pane" aria-selected="false" style="background: none; border: none; font-family: 'Poppins', sans-serif;">
+                        <i class="fa-solid fa-paste me-2 text-primary"></i>Paste Policy Text
+                    </button>
+                </li>
+            </ul>
+        </div>
+        <div class="card-body p-4">
+            <div class="tab-content" id="analyzerTabsContent">
+                <!-- Upload Pane -->
+                <div class="tab-pane fade show active" id="upload-pane" role="tabpanel" aria-labelledby="upload-tab" tabindex="0">
+                    <form method="POST" action="{{ url_for('policy.upload') }}" enctype="multipart/form-data" id="uploadForm">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+                            <i class="fa-solid fa-cloud-arrow-up fa-3x text-primary mb-3"></i>
+                            <h5 style="font-family: 'Poppins', sans-serif;">Upload a Privacy Policy</h5>
+                            <p class="text-muted small">Drag and drop your file here, or click to browse.<br>We support PDF, DOCX, and TXT files.</p>
+                            <p class="text-muted" style="font-size: 0.75rem;">Maximum file size: 10MB</p>
+                            <input type="file" id="fileInput" name="file" accept=".pdf,.docx,.txt" style="display: none;" onchange="this.form.submit()">
+                        </div>
+                    </form>
+                </div>
+                
+                <!-- Paste Pane -->
+                <div class="tab-pane fade" id="paste-pane" role="tabpanel" aria-labelledby="paste-tab" tabindex="0">
+                    <form method="POST" action="{{ url_for('policy.paste') }}" id="pasteForm">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="mb-3">
+                            <label for="policyTitle" class="form-label fw-medium text-secondary small" style="font-family: 'Poppins', sans-serif;">Policy Title / Company Name</label>
+                            <input type="text" class="form-control px-3 py-2" id="policyTitle" name="policy_title" placeholder="e.g. Acme Corp Privacy Policy">
+                        </div>
+                        <div class="mb-3">
+                            <label for="policyText" class="form-label fw-medium text-secondary small" style="font-family: 'Poppins', sans-serif;">Privacy Policy Text <span class="text-danger">*</span></label>
+                            <textarea class="form-control px-3 py-2" id="policyText" name="policy_text" rows="8" placeholder="Paste the text of the privacy policy here (minimum 50 characters)..." required></textarea>
+                            <div class="form-text text-muted" style="font-size: 0.75rem;">
+                                <i class="fa-solid fa-circle-info me-1"></i>Copy the full text from the website's privacy policy page and paste it above.
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-end">
+                            <button type="submit" class="btn btn-primary px-4 py-2 hover-card" style="font-family: 'Poppins', sans-serif; font-weight: 500;">
+                                <i class="fa-solid fa-wand-magic-sparkles me-2"></i>Analyze Policy
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- History -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white py-3">
+            <h6 class="mb-0 fw-semibold">Previous Analyses</h6>
+        </div>
+        <div class="card-body p-0">
+            {% if reports %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="small">File Name</th>
+                            <th class="small">Date Analyzed</th>
+                            <th class="small">Overall Risk</th>
+                            <th class="small">Score</th>
+                            <th class="small">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for report in reports %}
+                        <tr>
+                            <td class="small">{{ report.original_filename }}</td>
+                            <td class="small text-muted">{{ report.created_at.strftime('%Y-%m-%d %H:%M') if report.created_at else 'N/A' }}</td>
+                            <td><span class="badge bg-{{ report.risk_color }}" style="font-size: 0.75rem;">{{ report.risk_label }}</span></td>
+                            <td class="small" style="font-family: 'JetBrains Mono', monospace;">{{ report.overall_policy_score }}/100</td>
+                            <td>
+                                <a href="{{ url_for('policy.view_report', report_id=report.id) }}" class="btn btn-sm btn-outline-primary" style="font-size: 0.75rem;">
+                                    <i class="fa-solid fa-eye me-1"></i>View
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="p-4 text-center text-muted">
+                <i class="fa-solid fa-file-import fa-2x mb-2"></i>
+                <p class="small mb-0">No policy analyses yet. Upload your first privacy policy above.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+const uploadZone = document.getElementById('uploadZone');
+const fileInput = document.getElementById('fileInput');
+
+uploadZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    uploadZone.classList.add('dragover');
+});
+
+uploadZone.addEventListener('dragleave', () => {
+    uploadZone.classList.remove('dragover');
+});
+
+uploadZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    uploadZone.classList.remove('dragover');
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+        fileInput.files = files;
+        document.getElementById('uploadForm').submit();
+    }
+});
+
+// Loading state for paste form submit
+document.getElementById('pasteForm').addEventListener('submit', function(e) {
+    const btn = this.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Analyzing...';
+});
+</script>
+{% endblock %}

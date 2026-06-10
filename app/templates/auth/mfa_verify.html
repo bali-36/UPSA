@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block title %}Verify Login{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-5">
+            <div class="card shadow border-warning">
+                <div class="card-body p-4 p-md-5 text-center">
+                    <div class="mb-4">
+                        <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 64px; height: 64px; background-color: #FEF3C7;">
+                            <i class="fa-solid fa-shield-halved fa-2x" style="color: #D97706;"></i>
+                        </div>
+                        <h4 style="font-family: 'Poppins', sans-serif; font-weight: 600;">We Need to Verify It's You</h4>
+                        <p class="text-muted small">This device or location looks unfamiliar. We've sent a 6-digit verification code to your email.</p>
+                    </div>
+
+                    <form method="POST" action="{{ url_for('auth.mfa_verify') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                        <div class="mb-4">
+                            <label for="mfa_code" class="form-label small fw-medium">Verification Code</label>
+                            <input type="text" class="form-control form-control-lg mfa-code-input" id="mfa_code"
+                                   name="mfa_code" placeholder="000000" maxlength="6" required
+                                   pattern="\d{6}" autocomplete="one-time-code">
+                            <div class="form-text">Code expires in 5 minutes</div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100 py-2 mb-3" style="background-color: #2563EB; border-color: #2563EB;">
+                            Verify & Continue
+                        </button>
+
+                        <a href="{{ url_for('auth.login') }}" class="btn btn-outline-secondary w-100 py-2">
+                            Cancel & Go Back
+                        </a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

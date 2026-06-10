@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+
+{% block title %}Survey Center{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+    <h4 class="mb-4" style="font-family: 'Poppins', sans-serif; font-weight: 600;">Survey Center</h4>
+
+    <div class="row g-4">
+        <!-- Security Awareness Survey -->
+        <div class="col-lg-6">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; background-color: #E8F4FD;">
+                            <i class="fa-solid fa-clipboard-list text-primary"></i>
+                        </div>
+                        <div>
+                            <h5 class="mb-0" style="font-family: 'Poppins', sans-serif;">Security Awareness Survey</h5>
+                            <small class="text-muted">10 questions • ~2 minutes</small>
+                        </div>
+                    </div>
+                    <p class="text-muted small">Assess your security habits across password management, MFA usage, phishing awareness, and privacy practices. Your responses directly improve your privacy score.</p>
+
+                    {% if latest_survey %}
+                    <div class="alert alert-info py-2 small mb-3">
+                        <i class="fa-solid fa-circle-info me-1"></i>Last completed:
+                        <strong>{{ latest_survey.awareness_score }}/100</strong> ({{ latest_survey.category_label }})
+                        on {{ latest_survey.completed_at.strftime('%B %d, %Y') if latest_survey.completed_at }}
+                    </div>
+                    {% endif %}
+
+                    <a href="{{ url_for('survey.security_survey') }}" class="btn btn-primary" style="background-color: #2563EB;">
+                        <i class="fa-solid fa-play me-1"></i>{{ 'Retake Survey' if latest_survey else 'Start Survey' }}
+                    </a>
+                    {% if latest_survey %}
+                    <a href="{{ url_for('survey.survey_results') }}" class="btn btn-outline-primary ms-2">View Results</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- SUS Evaluation -->
+        <div class="col-lg-6">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; background-color: #F0FDF4;">
+                            <i class="fa-solid fa-star text-success"></i>
+                        </div>
+                        <div>
+                            <h5 class="mb-0" style="font-family: 'Poppins', sans-serif;">System Usability Scale (SUS)</h5>
+                            <small class="text-muted">10 questions • ~1 minute</small>
+                        </div>
+                    </div>
+                    <p class="text-muted small">Help us improve UPSA by rating your experience. The SUS is a standardized measure of usability used worldwide. Your feedback helps us make security easier for everyone.</p>
+
+                    {% if latest_sus %}
+                    <div class="alert alert-success py-2 small mb-3">
+                        <i class="fa-solid fa-circle-check me-1"></i>Last score:
+                        <strong>{{ latest_sus.sus_score }}</strong> ({{ latest_sus.interpretation_label }})
+                    </div>
+                    {% endif %}
+
+                    <a href="{{ url_for('survey.sus_survey') }}" class="btn btn-success">
+                        <i class="fa-solid fa-play me-1"></i>{{ 'Retake Evaluation' if latest_sus else 'Start Evaluation' }}
+                    </a>
+                    {% if latest_sus %}
+                    <a href="{{ url_for('survey.sus_results') }}" class="btn btn-outline-success ms-2">View Results</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
