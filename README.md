@@ -181,8 +181,12 @@ Uses rule-based NLP to process policy text:
 Follow these steps to run UPSA on your local machine:
 
 ### 1. Clone & Set Up Virtual Environment
-Navigate to the project directory in your terminal:
+Clone the repository and navigate to the project directory:
 ```bash
+# Clone the repository
+git clone https://github.com/bali-36/UPSA.git
+cd UPSA
+
 # Set up a virtual environment
 python -m venv .venv
 
