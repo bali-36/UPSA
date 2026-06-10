@@ -24,6 +24,21 @@ Historically, cybersecurity has been a trade-off: increasing security meant incr
 
 ---
 
+## 📚 Academic Research & Paper
+
+This project is backed by the research paper: **"UPSA: A Human-Centric Unified Privacy & Security Assistant with Adaptive Machine Learning"** (published in *NCSA National Cyber Security Academy, Air University*, 2026, Vol. 1).
+
+### Key Contributions & Research Gap Solved:
+*   **Static vs. Adaptive Authentication:** Introduces an Adaptive Risk Engine mapping contextual risk factors to custom login workflows.
+*   **Explainable Security Interface:** Formulates layman-friendly security recommendations and a single, unified Privacy Health Score.
+*   **Friction-Reduction Pipeline:** Measures UX friction via a Frustration Analyzer to programmatically adjust security controls.
+*   **Proactive Threat Defense:** Employs an ML classifier ensemble to predict phishing susceptibility and account takeover probabilities before exploitation.
+*   **Usability Validation:** Tested using the standardized **System Usability Scale (SUS)**, achieving ratings in the **"Good" to "Excellent"** range ($> 80$).
+
+For detailed research methodology, empirical data, and references, please refer directly to the [UPSA Research Paper.pdf](UPSA%20Research%20Paper.pdf) in the root directory.
+
+---
+
 ## 🔧 Enterprise Integration Playbook
 
 Companies can easily integrate UPSA's key modules into their existing web systems. Below are the architectural patterns for integration:
