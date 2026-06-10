@@ -251,8 +251,8 @@ Run tests using Pytest with the virtual environment activated:
     .venv\Scripts\python -m pytest --cov=app tests/
     ```
 
----
-
 ## 📄 License
 
-Copyright © 2026 UPSA. All rights reserved. Designed to make modern digital environments safer and more user-friendly.
+This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
+
+Copyright (c) 2026 Muhammad Bilal Badar. All rights reserved.
