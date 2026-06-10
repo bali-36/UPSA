@@ -138,12 +138,26 @@ Every login attempt is evaluated using these risk factors:
 *   **High Risk ($> 60$):** Account locked; requires administrative review.
 
 #### B. Frustration Index Calculation ([frustration_metric.py](file:///e:/UPSA/app/models/frustration_metric.py))
-Frustration levels are calculated using a weighted index of recent issues:
-$$\text{Friction Score} = \min(\text{Failures}_{7d} \times 5, 25) + \min(\text{Resets}_{7d} \times 10, 20) + \min(\text{MFA\_Abandonments} \times 8, 24) + \min(\text{Help\_Visits} \times 3, 15)$$
+The frustration level is a weighted index calculated from the user's login and session interactions over a rolling 7-day period.
 
-*   $\le 20$: **Low Frustration** (Smooth Experience)
-*   $21 - 45$: **Medium Frustration** (Some Friction)
-*   $> 45$: **High Frustration** (High Friction - triggers session updates and adaptive assistance)
+##### Scoring Metrics:
+*   **Failed Logins:** +5 points per failure (capped at 25 points)
+*   **Password Resets:** +10 points per reset request (capped at 20 points)
+*   **MFA Abandonments:** +8 points per abandoned flow (capped at 24 points)
+*   **Help Page Visits:** +3 points per visit to the support page (capped at 15 points)
+
+##### Friction Score Formula:
+```text
+Friction Score = Min(Failed_Logins * 5, 25) 
+                 + Min(Password_Resets * 10, 20) 
+                 + Min(MFA_Abandonments * 8, 24) 
+                 + Min(Help_Visits * 3, 15)
+```
+
+##### Categorization & System Response:
+*   **Low Frustration (Score $\le$ 20):** *Smooth Experience*. Default security checks apply.
+*   **Medium Frustration (Score 21 - 45):** *Some Friction*. System suggests helpful configuration tips (e.g., saving browser as trusted, utilizing a password manager).
+*   **High Frustration (Score $>$ 45):** *High Friction*. System initiates adaptive UX adjustments (e.g., safely extending the trusted device session duration to reduce verification prompts).
 
 #### C. Machine Learning Analytics Pipeline ([ml_service.py](file:///e:/UPSA/app/services/ml_service.py))
 UPSA uses ML models to predict:
